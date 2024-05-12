@@ -1,0 +1,118 @@
+import datetime
+
+# Absztrakt Szoba osztály
+class Szoba:
+    def __init__(self, szobaszam, ar):
+        if type(self) == Szoba:
+            raise TypeError('A Szoba egy absztrakt osztály, nem példányosítható közvetlenül')
+        self.szobaszam = szobaszam
+        self.ar = ar
+
+    def get_ar(self):
+        return self.ar
+
+# Egyágyas és Kétágyas szobák, amelyek a Szoba osztályból származnak
+class EgyagyasSzoba(Szoba):
+    def __init__(self, szobaszam, ar):
+        super().__init__(szobaszam, ar)
+
+class KetagyasSzoba(Szoba):
+    def __init__(self, szobaszam, ar):
+        super().__init__(szobaszam, ar)
+
+# Szálloda osztály
+class Szalloda:
+    def __init__(self, nev):
+        self.nev = nev
+        self.szobak = []
+
+    def szoba_hozzaadas(self, szoba):
+        self.szobak.append(szoba)
+
+    def szoba_kereses_szam_alapjan(self, szobaszam):
+        for szoba in self.szobak:
+            if szoba.szobaszam == szobaszam:
+                return szoba
+        return None
+
+# Foglalás osztály
+class Foglalas:
+    def __init__(self, szoba, datum):
+        self.szoba = szoba
+        self.datum = datum
+
+# Foglalások kezelése egy szállodában
+class FoglalasManager:
+    def __init__(self, szalloda):
+        self.szalloda = szalloda
+        self.foglalasok = []
+
+    def szoba_foglalas(self, szobaszam, datum):
+        if datum < datetime.date.today():
+            return "Érvénytelen dátum. Kérjük, válasszon jövőbeli dátumot."
+        szoba = self.szalloda.szoba_kereses_szam_alapjan(szobaszam)
+        if szoba is None:
+            return "A megadott szobaszám nem létezik."
+        for foglalas in self.foglalasok:
+            if foglalas.szoba == szoba and foglalas.datum == datum:
+                return "A szoba ezen a napon már foglalt."
+        self.foglalasok.append(Foglalas(szoba, datum))
+        return f"A szoba sikeresen lefoglalva erre a napra: {datum}, ár: {szoba.get_ar()}"
+
+    def foglalas_lemondas(self, szobaszam, datum):
+        for foglalas in self.foglalasok:
+            if foglalas.szoba.szobaszam == szobaszam and foglalas.datum == datum:
+                self.foglalasok.remove(foglalas)
+                return "Foglalás sikeresen lemondva."
+        return "Nincs ilyen foglalás, amit le lehetne mondani."
+
+    def foglalasok_listazasa(self):
+        return "\\n".join([f"Szoba {fogl.szoba.szobaszam} foglalva ekkor: {fogl.datum}" for fogl in self.foglalasok])
+
+# Felhasználói interfész
+def felhasznaloi_interfesz():
+    szalloda = Szalloda("Legjobb Szálloda")
+    szalloda.szoba_hozzaadas(EgyagyasSzoba(101, 100))
+    szalloda.szoba_hozzaadas(KetagyasSzoba(102, 150))
+    szalloda.szoba_hozzaadas(EgyagyasSzoba(103, 120))
+
+    manager = FoglalasManager(szalloda)
+
+    # Néhány foglalás előre rögzítése
+    manager.szoba_foglalas(101, datetime.date(2024, 5, 10))
+    manager.szoba_foglalas(102, datetime.date(2024, 5, 11))
+    manager.szoba_foglalas(103, datetime.date(2024, 5, 12))
+    manager.szoba_foglalas(101, datetime.date(2024, 5, 13))
+    manager.szoba_foglalas(102, datetime.date(2024, 5, 14))
+
+    while True:
+        print("\\nOpciók:")
+        print("1. Szoba foglalása")
+        print("2. Foglalás lemondása")
+        print("3. Összes foglalás listázása")
+        print("4. Kilépés")
+        valasztas = input("Válasszon egy műveletet: ")
+
+        if valasztas == '1':
+            szobaszam = int(input("Adja meg a szobaszámot: "))
+            ev = int(input("Adja meg az évet: "))
+            honap = int(input("Adja meg a hónapot: "))
+            nap = int(input("Adja meg a napot: "))
+            datum = datetime.date(ev, honap, nap)
+            print(manager.szoba_foglalas(szobaszam, datum))
+        elif valasztas == '2':
+            szobaszam = int(input("Adja meg a szobaszámot: "))
+            ev = int(input("Adja meg az évet: "))
+            honap = int(input("Adja meg a hónapot: "))
+            nap = int(input("Adja meg a napot: "))
+            datum = datetime.date(ev, honap, nap)
+            print(manager.foglalas_lemondas(szobaszam, datum))
+        elif valasztas == '3':
+            print("Foglalások:\\n" + manager.foglalasok_listazasa())
+        elif valasztas == '4':
+            break
+        else:
+            print("Érvénytelen választás, kérem próbálja újra.")
+
+if __name__ == "__main__":
+    felhasznaloi_interfesz()
